@@ -7,4 +7,4 @@ env:
   - variable: IMAGE_PROVIDER
     value: gemini
   - variable: FIREBASE_STORAGE_BUCKET
-    secret: FIREBASE_STORAGE_BUCKET
+    value: endoapplication-11c45.firebasestorage.app
