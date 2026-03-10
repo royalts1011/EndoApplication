@@ -22,7 +22,7 @@ const DEFAULT_IMAGE_MODEL = 'gemini-2.5-flash-image'
 // ─── Gemini image generation ──────────────────────────────────────────────────
 
 async function generateWithGemini(prompt: string, model: string): Promise<string> {
-  const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_AI_API_KEY })
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
   const response = await ai.models.generateContent({
     model,
     contents: prompt,
@@ -38,8 +38,8 @@ async function generateWithGemini(prompt: string, model: string): Promise<string
 // ─── Imagen 3 ─────────────────────────────────────────────────────────────────
 
 async function generateWithImagen3(prompt: string): Promise<string> {
-  const apiKey = process.env.GOOGLE_AI_API_KEY
-  if (!apiKey) throw new Error('GOOGLE_AI_API_KEY is not set')
+  const apiKey = process.env.GEMINI_API_KEY
+  if (!apiKey) throw new Error('GEMINI_API_KEY is not set')
 
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`,

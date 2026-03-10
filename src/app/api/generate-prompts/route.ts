@@ -15,7 +15,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenAI } from '@google/genai'
 import { DEFAULT_BRAND_STYLE_GUIDE, BATCH_SERIES_PROMPT } from '@/lib/brand'
 
-const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_AI_API_KEY })
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
 
 export async function POST(req: NextRequest) {
   try {

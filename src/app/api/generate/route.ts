@@ -60,7 +60,7 @@ async function generateWithGemini(
   articleTitle?: string,
   articleContent?: string
 ): Promise<string> {
-  const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_AI_API_KEY })
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
 
   const input = articleContent?.trim()
     ? `ARTICLE TITLE: ${articleTitle}\n\nARTICLE CONTENT:\n${articleContent}\n\n` +
@@ -82,8 +82,8 @@ async function generateWithGemini(
 }
 
 async function generateWithImagen3(prompt: string): Promise<string> {
-  const apiKey = process.env.GOOGLE_AI_API_KEY
-  if (!apiKey) throw new Error('GOOGLE_AI_API_KEY is not set')
+  const apiKey = process.env.GEMINI_API_KEY
+  if (!apiKey) throw new Error('GEMINI_API_KEY is not set')
 
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`,
@@ -148,7 +148,7 @@ export async function POST(req: NextRequest) {
     )
 
     // ── Step 2: Gemini summarizes + generates prompts in one call ───────────
-    const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_AI_API_KEY })
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
     const systemInstruction = BATCH_SERIES_PROMPT + brandGuide
 
     const articleList = articlesWithContent
