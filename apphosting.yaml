@@ -6,3 +6,5 @@ env:
     secret: GEMINI_API_KEY
   - variable: IMAGE_PROVIDER
     value: gemini
+  - variable: FIREBASE_STORAGE_BUCKET
+    secret: FIREBASE_STORAGE_BUCKET

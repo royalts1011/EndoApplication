@@ -1,6 +1,7 @@
 /**
- * Job history — stored in Firestore (production) or local file (dev fallback).
+ * Job history — Firestore + Storage (production) or local file (dev fallback).
  * Firestore collection: "jobs"
+ * Storage path: jobs/<jobId>/<index>.jpg
  */
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs'
 import { join } from 'path'
@@ -15,11 +16,41 @@ export interface ServerJob {
   createdAt: string // ISO
 }
 
-// ── Firestore ─────────────────────────────────────────────────────────────────
+// ── Detect environment ────────────────────────────────────────────────────────
 
 const firestoreAvailable = !!(
-  process.env.FIREBASE_PROJECT_ID || process.env.K_SERVICE // K_SERVICE is set on Cloud Run / Firebase App Hosting
+  process.env.FIREBASE_PROJECT_ID || process.env.K_SERVICE
 )
+
+// ── Storage upload helper ─────────────────────────────────────────────────────
+
+async function uploadImages(jobId: string, imageUrls: string[]): Promise<string[]> {
+  const { getAdminStorage } = await import('./firebase-admin')
+  const bucket = getAdminStorage().bucket()
+
+  return Promise.all(
+    imageUrls.map(async (url, i) => {
+      // Already a remote URL (e.g. pollinations) — keep as-is
+      if (!url.startsWith('data:')) return url
+
+      const matches = url.match(/^data:([^;]+);base64,(.+)$/)
+      if (!matches) return url
+
+      const mimeType = matches[1]
+      const buffer = Buffer.from(matches[2], 'base64')
+      const ext = mimeType.split('/')[1] ?? 'jpg'
+      const filePath = `jobs/${jobId}/${i}.${ext}`
+
+      const file = bucket.file(filePath)
+      await file.save(buffer, { metadata: { contentType: mimeType } })
+      await file.makePublic()
+
+      return `https://storage.googleapis.com/${bucket.name}/${filePath}`
+    })
+  )
+}
+
+// ── Firestore ─────────────────────────────────────────────────────────────────
 
 async function firestoreListJobs(): Promise<ServerJob[]> {
   const { getAdminDb } = await import('./firebase-admin')
@@ -28,28 +59,55 @@ async function firestoreListJobs(): Promise<ServerJob[]> {
     .orderBy('createdAt', 'desc')
     .limit(50)
     .get()
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as ServerJob))
+  return snap.docs.map((d) => {
+    const data = d.data()
+    return {
+      id: d.id,
+      ...data,
+      createdAt:
+        typeof data.createdAt?.toDate === 'function'
+          ? data.createdAt.toDate().toISOString()
+          : data.createdAt ?? new Date().toISOString(),
+    } as ServerJob
+  })
 }
 
 async function firestoreGetJob(id: string): Promise<ServerJob | null> {
   const { getAdminDb } = await import('./firebase-admin')
   const doc = await getAdminDb().collection('jobs').doc(id).get()
   if (!doc.exists) return null
-  return { id: doc.id, ...doc.data() } as ServerJob
+  const data = doc.data()!
+  return {
+    id: doc.id,
+    ...data,
+    createdAt:
+      typeof data.createdAt?.toDate === 'function'
+        ? data.createdAt.toDate().toISOString()
+        : data.createdAt ?? new Date().toISOString(),
+  } as ServerJob
 }
 
 async function firestoreSaveJob(job: Omit<ServerJob, 'id' | 'createdAt'>): Promise<ServerJob> {
   const { getAdminDb } = await import('./firebase-admin')
   const { FieldValue } = await import('firebase-admin/firestore')
-  const ref = await getAdminDb().collection('jobs').add({
+
+  // Create the Firestore doc first to get an ID
+  const ref = getAdminDb().collection('jobs').doc()
+  const jobId = ref.id
+
+  // Upload base64 images to Storage, get back public URLs
+  const imageUrls = await uploadImages(jobId, job.imageUrls)
+
+  await ref.set({
     ...job,
+    imageUrls,
     createdAt: FieldValue.serverTimestamp(),
   })
-  const createdAt = new Date().toISOString()
-  return { id: ref.id, ...job, createdAt }
+
+  return { id: jobId, ...job, imageUrls, createdAt: new Date().toISOString() }
 }
 
-// ── File fallback (local dev without Firebase) ─────────────────────────────
+// ── File fallback (local dev) ─────────────────────────────────────────────────
 
 const DATA_DIR = join(process.cwd(), 'data')
 const FILE = join(DATA_DIR, 'jobs.json')
@@ -73,9 +131,12 @@ function fileSaveJob(job: Omit<ServerJob, 'id' | 'createdAt'>): ServerJob {
     id: Math.random().toString(36).slice(2, 10),
     createdAt: new Date().toISOString(),
   }
-  const existing = fileListJobs()
   if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true })
-  writeFileSync(FILE, JSON.stringify([newJob, ...existing].slice(0, 50), null, 2), 'utf-8')
+  writeFileSync(
+    FILE,
+    JSON.stringify([newJob, ...fileListJobs()].slice(0, 50), null, 2),
+    'utf-8'
+  )
   return newJob
 }
 
