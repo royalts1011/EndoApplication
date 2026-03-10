@@ -196,7 +196,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { id: jobId } = saveJob({ titles, summaries, prompts, imageUrls, seriesConcept })
+    const { id: jobId } = await saveJob({ titles, summaries, prompts, imageUrls, seriesConcept })
 
     return NextResponse.json({ jobId, summaries, prompts, imageUrls, seriesConcept })
   } catch (err) {
