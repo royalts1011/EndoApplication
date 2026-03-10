@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Endo Health — Blog Header Generator
 
-## Getting Started
+An internal tool for generating brand-consistent AI blog header images from article titles and content. Built for [endometriose.app](https://endometriose.app).
 
-First, run the development server:
+## What it does
+
+1. **Fetch** — scrapes the latest blog post titles and URLs from endometriose.app
+2. **Generate** — sends all articles to Gemini in one call: it reads the content, writes a summary per article, and creates a cohesive set of image prompts with a shared visual style
+3. **Images** — generates header images (1200×630px) sequentially using a selected Gemini image model
+4. **History** — every generation job is saved and accessible to all team members
+
+## Tech stack
+
+- **Next.js 15** (App Router)
+- **Google Gemini** — `gemini-2.5-flash` for prompt generation, `gemini-2.5-flash-image` / `gemini-3-pro-image-preview` for images
+- **shadcn/ui + Tailwind CSS v4**
+- **File-based job history** (`data/jobs.json`) — shared across the local network
+
+## Local setup
+
+**1. Clone and install**
+
+```bash
+git clone <repo-url>
+cd endo_health
+npm install
+```
+
+**2. Set environment variables**
+
+Create a `.env.local` file:
+
+```env
+GOOGLE_AI_API_KEY=your_gemini_api_key_here
+IMAGE_PROVIDER=gemini
+```
+
+Get a Gemini API key at [aistudio.google.com](https://aistudio.google.com).
+
+**3. Run**
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploying to Firebase
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+This app is configured for **Firebase App Hosting** (native Next.js support).
 
-## Learn More
+### Prerequisites
 
-To learn more about Next.js, take a look at the following resources:
+- Firebase CLI: `npm install -g firebase-tools`
+- A Firebase project with **Firestore** and **App Hosting** enabled
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Steps
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+firebase login
+firebase init apphosting
+```
 
-## Deploy on Vercel
+Connect to your GitHub repo when prompted. Then add the API key as a secret:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+firebase apphosting:secrets:set GOOGLE_AI_API_KEY
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+After that, every push to `main` deploys automatically.
+
+> **Note:** The file-based job history (`data/jobs.json`) does not persist on Firebase's serverless infrastructure. Switch `src/lib/server-history.ts` to use Firestore before deploying.
+
+## Brand style guide
+
+The visual style sent to Gemini can be customized in the **Settings** page. Changes are saved in the browser's localStorage and sent with each generation request.
+
+## Image models
+
+| Model | Speed | Quality |
+|---|---|---|
+| Gemini 2.5 Flash Image | Fast | Good |
+| Gemini 3.1 Flash Image | Medium | Better |
+| Gemini 3 Pro Image | Slow | Highest |

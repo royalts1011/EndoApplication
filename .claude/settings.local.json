@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npx shadcn@latest add button textarea card badge skeleton separator toast)",
+      "Bash(npx shadcn@latest add button textarea card badge skeleton separator sonner)",
+      "Bash(npm run:*)"
+    ]
+  }
+}

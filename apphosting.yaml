@@ -1,0 +1,8 @@
+runConfig:
+  minInstances: 0
+
+env:
+  - variable: GOOGLE_AI_API_KEY
+    secret: GOOGLE_AI_API_KEY
+  - variable: IMAGE_PROVIDER
+    value: gemini
