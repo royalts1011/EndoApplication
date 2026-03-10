@@ -17,7 +17,7 @@ import type { ImageProvider } from '@/types'
 const PROVIDER = (process.env.IMAGE_PROVIDER ?? 'gemini') as ImageProvider
 const IMAGE_WIDTH = 1200
 const IMAGE_HEIGHT = 630
-const DEFAULT_IMAGE_MODEL = 'gemini-2.5-flash-image'
+const DEFAULT_IMAGE_MODEL = 'gemini-3.1-flash-image-preview'
 
 // ─── Gemini image generation ──────────────────────────────────────────────────
 

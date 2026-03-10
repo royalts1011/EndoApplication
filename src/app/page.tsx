@@ -19,8 +19,7 @@ import {
 import type { ArticleInfo, ImageResult } from '@/types'
 
 const IMAGE_MODELS = [
-  { value: 'gemini-2.5-flash-image', label: 'Gemini 2.5 Flash Image', description: 'Fast & cheap' },
-  { value: 'gemini-3.1-flash-image-preview', label: 'Gemini 3.1 Flash Image', description: 'Better quality' },
+  { value: 'gemini-3.1-flash-image-preview', label: 'Gemini 3.1 Flash Image', description: 'Fast & good quality' },
   { value: 'gemini-3-pro-image-preview', label: 'Gemini 3 Pro Image', description: 'Highest quality' },
 ] as const
 
@@ -35,7 +34,7 @@ export default function HomePage() {
   const [regeneratingIndex, setRegeneratingIndex] = useState<number | null>(null)
   const [currentJobId, setCurrentJobId] = useState<string | null>(null)
   const [isFetchingTitles, setIsFetchingTitles] = useState(false)
-  const [imageModel, setImageModel] = useState<ImageModelValue>('gemini-2.5-flash-image')
+  const [imageModel, setImageModel] = useState<ImageModelValue>('gemini-3.1-flash-image-preview')
 
 
   // Restore last session on mount
